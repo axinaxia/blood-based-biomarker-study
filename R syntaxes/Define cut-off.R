@@ -17,7 +17,7 @@ library(rlang)
 
 # 1. Randomly split data to training and test set ----
 datasets_list <- list(
-  "dataset_dem10" = dataset_dem10, # "dataset_dem10" include biomarker and 10-year dementia data
+  "dataset_dem10" = dataset_dem10, # "dataset_dem10" include biomarker and 10-year all-cause dementia data
   "dataset_ad10" = dataset_ad10 # "dataset_ad10" include biomarker and 10-year AD data
 )
 
@@ -234,7 +234,7 @@ empty_frame <- data.frame(data = character(0), cp=numeric(0),cp_ci = character(0
 # 2.1. ab ratio ----
 cp_abratio<-empty_frame
 
-# ab ratio for dementia
+# ab ratio for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_abratio<-rbind(cp_abratio,
                     cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -263,7 +263,7 @@ for (i in grep("ad10",names(dataset_training_list))){
 # 2.2. ptau181 ----
 cp_ptau181<-empty_frame
 
-# ptau181 for dementia
+# ptau181 for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
 cp_ptau181<-rbind(cp_ptau181,
                  cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -293,7 +293,7 @@ for (i in grep("ad10",names(dataset_training_list))){
 # 2.3. ptau217 ----
 cp_ptau217<-empty_frame
 
-# ptau217 for dementia
+# ptau217 for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_ptau217<-rbind(cp_ptau217,
                     cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -322,7 +322,7 @@ for (i in grep("ad10",names(dataset_training_list))){
 # 2.4. ttau ----
 cp_ttau<-empty_frame
 
-# ttau for dementia
+# ttau for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_ttau<-rbind(cp_ttau,
                  cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -354,7 +354,7 @@ for (i in grep("ad10",names(dataset_training_list))){
 # 2.5. nfl ----
 cp_nfl<-empty_frame
 
-# nfl for dementia
+# nfl for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_nfl<-rbind(cp_nfl,
                 cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -386,7 +386,7 @@ for (i in grep("ad10",names(dataset_training_list))){
 # 2.6. gfap ----
 cp_gfap<-empty_frame
 
-# gfap for dementia
+# gfap for all-cause dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_gfap<-rbind(cp_gfap,
                 cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
