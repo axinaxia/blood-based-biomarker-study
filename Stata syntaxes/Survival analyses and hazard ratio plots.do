@@ -8,7 +8,7 @@ To evaluate the predictive performance of these biomarkers for all-cause and AD 
 
 AIM 1: We conducted Cox proportional hazards regression models using calendar time as the time scale. These analyses were performed using Stata, version 17.
 
-AIM 2: The search for optimal cut-offs and the evaluation of biomarker performance was done in R. For further details, please refer to the R script provided.
+AIM 2: The search for optimal cut-offs and the evaluation of biomarker performance using these cut-offs were done in R. For further details, please refer to the R script provided.
 
 The syntax below outlines the analysis for p-tau217 toward all-cause dementia (dem). To analyze other biomarkers, replace P-tau217 with the relevant biomarker name. To analyze AD dementia replace time_to_dementia with time_to_AD and dem with AD_dem. 
 */
