@@ -261,10 +261,10 @@ for (i in grep("ad10",names(dataset_training_list))){
 }
 
 
-# 2.2. ptau 181 ----
+# 2.2. ptau181 ----
 cp_ptau181<-empty_frame
 
-# ptau 181 for dementia
+# ptau181 for dementia
 for (i in grep("dem10",names(dataset_training_list))){
 cp_ptau181<-rbind(cp_ptau181,
                  cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
@@ -291,10 +291,10 @@ for (i in grep("ad10",names(dataset_training_list))){
 
 
 
-# 2.3. ptau 217 ----
+# 2.3. ptau217 ----
 cp_ptau217<-empty_frame
 
-# ptau 217 for dementia
+# ptau217 for dementia
 for (i in grep("dem10",names(dataset_training_list))){
   cp_ptau217<-rbind(cp_ptau217,
                     cbind(data=gsub("_training", "", names(dataset_training_list)[i]),
