@@ -123,96 +123,96 @@ cp_out <- function(training_data, test_data, marker, outcome, direction) {
   
   # estimates and 95% CI in the training set
   # optimal cut-off and 95% CI
-  cp<-cp_training_temp$optimal_cutpoint
+  cp<-as.numeric(cp_training_temp$optimal_cutpoint)
   cp_ci<-boot_ci(cp_training_temp,optimal_cutpoint)
-  cp_ci<-paste0(format(round(cp,digits = 3),nsmall=3)," (",
-                format(round(as.numeric(cp_ci[1,2]),digits = 3),nsmall=3),"-",
-                format(round(as.numeric(cp_ci[2,2]),digits = 3),nsmall=3),")")
+  cp_ci<-paste0(format(round(cp,digits = 3),nsmall = 3)," (",
+                format(round(as.numeric(cp_ci[1,2]),digits = 3),nsmall = 3),"-",
+                format(round(as.numeric(cp_ci[2,2]),digits = 3),nsmall = 3),")")
   
   # PPV and 95% CI
-  train_ppv<-cp_training_temp_ppv$ppv
+  train_ppv<-as.numeric(cp_training_temp_ppv$ppv)
   train_ppv_ci<-boot_ci(cp_training_temp_ppv,ppv)
-  train_ppv_ci<-paste0(format(round(train_ppv*100,digits = 2),nsmall=2)," (",
-                       format(round(train_ppv_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_ppv_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_ppv_ci<-paste0(format(round(train_ppv*100,digits = 1),nsmall = 1)," (",
+                       format(round(train_ppv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(train_ppv_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # NPV and 95% CI
-  train_npv<-cp_training_temp_npv$npv
+  train_npv<-as.numeric(cp_training_temp_npv$npv)
   train_npv_ci<-boot_ci(cp_training_temp_npv,npv)
-  train_npv_ci<-paste0(format(round(train_npv*100,digits = 2),nsmall=2)," (",
-                       format(round(train_npv_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_npv_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_npv_ci<-paste0(format(round(train_npv*100,digits = 1),nsmall = 1)," (",
+                       format(round(train_npv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(train_npv_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Accuracy and 95% CI
   train_acc<-as.numeric(cp_training_temp_ppv$acc)
   train_acc_ci<-boot_ci(cp_training_temp_ppv,acc)
-  train_acc_ci<-paste0(format(round(train_acc*100,digits = 2),nsmall=2)," (",
-                       format(round(train_acc_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_acc_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_acc_ci<-paste0(format(round(train_acc*100,digits = 1),nsmall = 1)," (",
+                       format(round(train_acc_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(train_acc_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Sensitivity and 95% CI
   train_sens<-as.numeric(cp_training_temp_ppv$sensitivity)
   train_sens_ci<-boot_ci(cp_training_temp_ppv,sensitivity)
-  train_sens_ci<-paste0(format(round(train_sens*100,digits = 2),nsmall=2)," (",
-                       format(round(train_sens_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_sens_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_sens_ci<-paste0(format(round(train_sens*100,digits = 1),nsmall = 1)," (",
+                       format(round(train_sens_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(train_sens_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Specificity and 95% CI
   train_spe<-as.numeric(cp_training_temp_ppv$specificity)
   train_spe_ci<-boot_ci(cp_training_temp_ppv,specificity)
-  train_spe_ci<-paste0(format(round(train_spe*100,digits = 2),nsmall=2)," (",
-                       format(round(train_spe_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_spe_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_spe_ci<-paste0(format(round(train_spe*100,digits = 1),nsmall = 1)," (",
+                       format(round(train_spe_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(train_spe_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # AUC and 95% CI
-  train_auc<-cp_training_temp_ppv$AUC
+  train_auc<-as.numeric(cp_training_temp_ppv$AUC)
   train_auc_ci<-boot_ci(cp_training_temp_ppv,AUC)
-  train_auc_ci<-paste0(format(round(train_auc*100,digits = 2),nsmall=2)," (",
-                       format(round(train_auc_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(train_auc_ci[2,2]*100,digits = 2),nsmall=2),")")
+  train_auc_ci<-paste0(format(round(train_auc,digits = 3),nsmall = 3)," (",
+                       format(round(as.numeric(train_auc_ci[1,2]),digits = 3),nsmall = 3),"-",
+                       format(round(as.numeric(train_auc_ci[2,2]),digits = 3),nsmall = 3),")")
   
   # estimates and 95% CI in the test set
   # PPV and 95% CI
-  test_ppv<-cp_test_temp_ppv$ppv
+  test_ppv<-as.numeric(cp_test_temp_ppv$ppv)
   test_ppv_ci<-boot_ci(cp_test_temp_ppv,ppv)
-  test_ppv_ci<-paste0(format(round(test_ppv*100,digits = 2),nsmall=2)," (",
-                       format(round(test_ppv_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(test_ppv_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_ppv_ci<-paste0(format(round(test_ppv*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_ppv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_ppv_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # NPV and 95% CI
-  test_npv<-cp_test_temp_npv$npv
+  test_npv<-as.numeric(cp_test_temp_npv$npv)
   test_npv_ci<-boot_ci(cp_test_temp_npv,npv)
-  test_npv_ci<-paste0(format(round(test_npv*100,digits = 2),nsmall=2)," (",
-                      format(round(test_npv_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                      format(round(test_npv_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_npv_ci<-paste0(format(round(test_npv*100,digits = 1),nsmall = 1)," (",
+                      format(round(test_npv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                      format(round(test_npv_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Accuracy and 95% CI
   test_acc<-as.numeric(cp_test_temp_ppv$acc)
   test_acc_ci<-boot_ci(cp_test_temp_ppv,acc)
-  test_acc_ci<-paste0(format(round(test_acc*100,digits = 2),nsmall=2)," (",
-                       format(round(test_acc_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(test_acc_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_acc_ci<-paste0(format(round(test_acc*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_acc_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_acc_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Sensitivity and 95% CI
   test_sens<-as.numeric(cp_test_temp_ppv$sensitivity)
   test_sens_ci<-boot_ci(cp_test_temp_ppv,sensitivity)
-  test_sens_ci<-paste0(format(round(test_sens*100,digits = 2),nsmall=2)," (",
-                        format(round(test_sens_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                        format(round(test_sens_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_sens_ci<-paste0(format(round(test_sens*100,digits = 1),nsmall = 1)," (",
+                        format(round(test_sens_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                        format(round(test_sens_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # Specificity and 95% CI
   test_spe<-as.numeric(cp_test_temp_ppv$specificity)
   test_spe_ci<-boot_ci(cp_test_temp_ppv,specificity)
-  test_spe_ci<-paste0(format(round(test_spe*100,digits = 2),nsmall=2)," (",
-                       format(round(test_spe_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(test_spe_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_spe_ci<-paste0(format(round(test_spe*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_spe_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_spe_ci[2,2]*100,digits = 1),nsmall = 1),")")
   
   # AUC and 95% CI
-  test_auc<-cp_test_temp_ppv$AUC
+  test_auc<-as.numeric(cp_test_temp_ppv$AUC)
   test_auc_ci<-boot_ci(cp_test_temp_ppv,AUC)
-  test_auc_ci<-paste0(format(round(test_auc*100,digits = 2),nsmall=2)," (",
-                       format(round(test_auc_ci[1,2]*100,digits = 2),nsmall=2),"-",
-                       format(round(test_auc_ci[2,2]*100,digits = 2),nsmall=2),")")
+  test_auc_ci<-paste0(format(round(test_auc,digits = 3),nsmall = 3)," (",
+                       format(round(as.numeric(test_auc_ci[1,2]),digits = 3),nsmall = 3),"-",
+                       format(round(as.numeric(test_auc_ci[2,2]),digits = 3),nsmall = 3),")")
   
   return(data.frame(cp = cp,
     cp_ci = cp_ci, train_ppv_ci = train_ppv_ci, train_npv_ci = train_npv_ci,
