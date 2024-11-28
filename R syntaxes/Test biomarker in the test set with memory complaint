@@ -14,8 +14,6 @@ library(rlang)
 
 
 # 1. Generate test sets for 10-year all-cause dementia and AD in people with memory complaint ----
-# Sample the original sample for training set
-# The remaining sample is the test set
 datasets_list <- list(
   "dataset_dem10" = dataset_dem10, # "dataset_dem10" include biomarker and 10-year dementia data
   "dataset_ad10" = dataset_ad10 # "dataset_ad10" include biomarker and 10-year AD data
