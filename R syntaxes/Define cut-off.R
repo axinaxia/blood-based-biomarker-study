@@ -12,8 +12,7 @@ library(tidyverse)
 library(cutpointr)
 library(haven)
 library(rlang)
-library(ggplot2)
-library(ggpubr)
+
 
 
 # 1. Randomly split data to training and test set ----
