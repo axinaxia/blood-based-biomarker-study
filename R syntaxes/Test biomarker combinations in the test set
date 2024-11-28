@@ -586,7 +586,6 @@ table_sum<-cp_abratio %>%
 
 # Tidy up the final summary table and edit column names
 table_sum<-table_sum %>% 
-  select(marker,everything()) %>% 
   mutate(outcome=ifelse(grepl("dem",data),"Dementia","AD")) %>% 
   select(marker,outcome,everything()) %>% 
   select(-data)
