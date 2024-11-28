@@ -27,27 +27,27 @@ library(patchwork)
 # first generate these variables for all-cause dementia
 dataset_dem10<-dataset_dem10 %>% 
   mutate(abetaratio_pos_dem=as.numeric(abetaratio<=
-                                      (cutoff_10yr %>% 
+                                      (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                          filter(marker=="abetaratio"&
                                                   outcome=="Dementia"))$cp), # abnormal ab ratio
          ptau181_pos_dem=as.numeric(ptau181>=
-                                   (cutoff_10yr %>% 
+                                   (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                       filter(marker=="ptau181"&
                                                outcome=="Dementia"))$cp), # elevated ptau181
          ttau_pos_dem=as.numeric(ttau>=
-                                      (cutoff_10yr %>% 
+                                      (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                          filter(marker=="ttau"&
                                                   outcome=="Dementia"))$cp), # elevated ttau
          ptau217_pos_dem=as.numeric(ptau217>=
-                                      (cutoff_10yr %>% 
+                                      (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                          filter(marker=="ptau217"&
                                                   outcome=="Dementia"))$cp), # elevated ptau217
          nfl_pos_dem=as.numeric(nfl>=
-                                      (cutoff_10yr %>% 
+                                      (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                          filter(marker=="nfl"&
                                                   outcome=="Dementia"))$cp), # elevated nfl
          gfap_pos_dem=as.numeric(gfap>=
-                                  (cutoff_10yr %>% 
+                                  (cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                      filter(marker=="gfap"&
                                               outcome=="Dementia"))$cp), # elevated gfap
 )
