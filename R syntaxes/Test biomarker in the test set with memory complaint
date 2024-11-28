@@ -1,0 +1,362 @@
+#--------------------------------------------------------------------------------------------------------------------------#
+# Analyses for "Blood-based biomarkers of Alzheimer’s disease and incident dementia in the community: a 16-year-long study"
+# Objective: To evaluate biomarker performance in people with cognitive complaint in the test set
+# Using the optimal cut-offs derived from the training set
+# R version 4.3.3
+#--------------------------------------------------------------------------------------------------------------------------#
+
+
+library(tidyverse)
+library(cutpointr)
+library(haven)
+library(rlang)
+
+
+
+# 1. Generate test sets for 10-year dementia and AD in people with memory complaint ----
+# Sample the original sample for training set
+# The remaining sample is the test set
+datasets_list <- list(
+  "dataset_dem10" = dataset_dem10, # "dataset_dem10" include biomarker and 10-year dementia data
+  "dataset_ad10" = dataset_ad10 # "dataset_ad10" include biomarker and 10-year AD data
+)
+
+dataset_training_list <- list()
+dataset_test_list <- list()
+
+for (dataset_name in names(datasets_list)) {
+  data <- datasets_list[[dataset_name]]  
+  split_ratio<-0.8
+  
+  set.seed(202411)
+  training_set <- data %>% sample_frac(split_ratio) # Sample for training set
+  
+  test_set <- data %>% anti_join(training_set, by = "Lopnr") %>%  # The remaining sample is the test set
+    filter(subj_complaints==1)
+  
+  dataset_training_list[[paste0(dataset_name, "_training")]] <- training_set
+  dataset_test_list[[paste0(dataset_name, "_test")]] <- test_set
+}
+
+
+
+
+# 2. Calculate the performance measures in the test set ----
+cp_out <- function(test_data, marker, cutoff, outcome, direction) {
+  # "marker" and "outcome" in the function evaluated as column names
+  marker <- enquo(marker)
+  outcome <- enquo(outcome)
+  
+  
+  # Test the performance of each biomarker in the test set using the cut-off derived from the training set
+  # calculate PPV etc in the test set
+  # The function also returns common measures - accuracy, sensitivity, specificity, and AUC
+  set.seed(202411)
+  cp_test_temp_ppv <- cutpointr(
+    data = test_data, x = !!marker, class = !!outcome, 
+    pos_class = 1, direction = direction, 
+    method = oc_manual,  # manually set the cut-off, later specified as the optimal cut-off derived from the training set
+    cutpoint = cutoff,
+    metric = ppv, # PPV
+    boot_runs = 5000
+  )
+  
+  # calculate NPV in the test set
+  set.seed(202411)
+  cp_test_temp_npv <- cutpointr(
+    data = test_data, x = !!marker, class = !!outcome, 
+    pos_class = 1, direction = direction, 
+    method = oc_manual,  # manually set the cut-off, later specified as the optimal cut-off derived from the training set
+    cutpoint = cutoff,
+    metric = npv, #NPV
+    boot_runs = 5000
+  )
+  
+  
+  # estimates and 95% CI in the test set
+  # PPV and 95% CI
+  test_ppv<-as.numeric(cp_test_temp_ppv$ppv)
+  test_ppv_ci<-boot_ci(cp_test_temp_ppv,ppv)
+  test_ppv_ci<-paste0(format(round(test_ppv*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_ppv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_ppv_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # NPV and 95% CI
+  test_npv<-as.numeric(cp_test_temp_npv$npv)
+  test_npv_ci<-boot_ci(cp_test_temp_npv,npv)
+  test_npv_ci<-paste0(format(round(test_npv*100,digits = 1),nsmall = 1)," (",
+                      format(round(test_npv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                      format(round(test_npv_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Accuracy and 95% CI
+  test_acc<-as.numeric(cp_test_temp_ppv$acc)
+  test_acc_ci<-boot_ci(cp_test_temp_ppv,acc)
+  test_acc_ci<-paste0(format(round(test_acc*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_acc_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_acc_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Sensitivity and 95% CI
+  test_sens<-as.numeric(cp_test_temp_ppv$sensitivity)
+  test_sens_ci<-boot_ci(cp_test_temp_ppv,sensitivity)
+  test_sens_ci<-paste0(format(round(test_sens*100,digits = 1),nsmall = 1)," (",
+                        format(round(test_sens_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                        format(round(test_sens_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Specificity and 95% CI
+  test_spe<-as.numeric(cp_test_temp_ppv$specificity)
+  test_spe_ci<-boot_ci(cp_test_temp_ppv,specificity)
+  test_spe_ci<-paste0(format(round(test_spe*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_spe_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_spe_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # AUC and 95% CI
+  test_auc<-as.numeric(cp_test_temp_ppv$AUC)
+  test_auc_ci<-boot_ci(cp_test_temp_ppv,AUC)
+  test_auc_ci<-paste0(format(round(test_auc,digits = 3),nsmall=3)," (",
+                       format(round(as.numeric(test_auc_ci[1,2]),digits = 3),nsmall = 3),"-",
+                       format(round(as.numeric(test_auc_ci[2,2]),digits = 3),nsmall = 3),")")
+  
+  return(data.frame(test_ppv_ci = test_ppv_ci, test_npv_ci = test_npv_ci,
+    test_acc_ci = test_acc_ci, test_sens_ci = test_sens_ci,
+    test_spe_ci = test_spe_ci, test_auc_ci = test_auc_ci))
+}
+
+empty_frame <- data.frame(data = character(0),
+                          test_ppv_ci = character(0),test_npv_ci = character(0),
+                          test_acc_ci = character(0),test_sens_ci = character(0), 
+                          test_spe_ci = character(0),test_auc_ci = character(0)) 
+
+# 3.1. ab ratio ----
+cp_abratio<-empty_frame
+
+# ab ratio for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_abratio<-rbind(cp_abratio,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(test_data = dataset_test_list[[i]],
+                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                                        filter(marker=="abetaratio"&
+                                                                 outcome=="Dementia"))$cp),
+                           marker = abetaratio, outcome = dem10, 
+                           direction = "<=")) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+# ab ratio for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_abratio<-rbind(cp_abratio,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(test_data = dataset_test_list[[i]],
+                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                                        filter(marker=="abetaratio"&
+                                                                 outcome=="AD"))$cp),
+                           marker = abetaratio, outcome = ad10, 
+                           direction = "<=")) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+# 3.2. ptau181 ----
+cp_ptau181<-empty_frame
+
+# ptau181 for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+cp_ptau181<-rbind(cp_ptau181,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(test_data = dataset_test_list[[i]],
+                              cutoff = as.numeric((cutoff_10yr %>% 
+                                                     filter(marker=="ptau181"&
+                                                              outcome=="Dementia"))$cp),
+                        marker = ptau181, outcome = dem10, 
+                        direction = ">=")) %>%
+                   as.data.frame() %>%
+                   set_names(names(empty_frame)))
+}
+
+# ptau181 for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ptau181<-rbind(cp_ptau181,
+                 cbind(data=names(dataset_test_list)[i],
+                  cp_out(test_data = dataset_test_list[[i]],
+                         cutoff = as.numeric((cutoff_10yr %>% 
+                                                filter(marker=="ptau181"&
+                                                         outcome=="AD"))$cp),
+                        marker = ptau181, outcome = ad10, 
+                        direction = ">=")) %>%
+                   as.data.frame() %>%
+                   set_names(names(empty_frame)))
+}
+
+
+# 3.3. ptau217 ----
+cp_ptau217<-empty_frame
+
+# ptau217 for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_ptau217<-rbind(cp_ptau217,
+                    cbind(data=names(dataset_test_list)[i],
+                     cp_out(test_data = dataset_test_list[[i]],
+                            cutoff = as.numeric((cutoff_10yr %>% 
+                                                   filter(marker=="ptau217"&
+                                                            outcome=="Dementia"))$cp),
+                           marker = ptau217, outcome = dem10, 
+                           direction = ">=")) %>%
+                      as.data.frame() %>%
+                      set_names(names(empty_frame)))
+}
+
+
+
+# ptau217 for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ptau217<-rbind(cp_ptau217,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(test_data = dataset_test_list[[i]],
+                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                                        filter(marker=="ptau217"&
+                                                                 outcome=="AD"))$cp),
+                           marker = ptau217, outcome = ad10, 
+                           direction = ">=")) %>%
+                      as.data.frame() %>%
+                      set_names(names(empty_frame)))
+}
+
+
+
+# 3.4. ttau ----
+cp_ttau<-empty_frame
+
+# ttau for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_ttau<-rbind(cp_ttau,
+                 cbind(data=names(dataset_test_list)[i],
+                  cp_out(test_data = dataset_test_list[[i]],
+                         cutoff = as.numeric((cutoff_10yr %>% 
+                                                filter(marker=="ttau"&
+                                                         outcome=="Dementia"))$cp),
+                        marker = ttau, outcome = dem10, 
+                        direction = ">=")) %>%
+                   as.data.frame() %>%
+                   set_names(names(empty_frame)))
+}
+
+# ttau for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ttau<-rbind(cp_ttau,
+                 cbind(data=names(dataset_test_list)[i],
+                  cp_out(test_data = dataset_test_list[[i]],
+                         cutoff = as.numeric((cutoff_10yr %>% 
+                                                filter(marker=="ttau"&
+                                                         outcome=="AD"))$cp),
+                        marker = ttau, outcome = ad10, 
+                        direction = ">=")) %>%
+                   as.data.frame() %>%
+                   set_names(names(empty_frame)))
+}
+
+
+
+# 3.5. nfl ----
+cp_nfl<-empty_frame
+
+# nfl for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_nfl<-rbind(cp_nfl,
+                cbind(data=names(dataset_test_list)[i],
+                      cp_out(test_data = dataset_test_list[[i]],
+                             cutoff = as.numeric((cutoff_10yr %>% 
+                                                    filter(marker=="nfl"&
+                                                             outcome=="Dementia"))$cp),
+                       marker = nfl, outcome = dem10, 
+                       direction = ">=")) %>% 
+                  as.data.frame() %>% 
+                  set_names(names(empty_frame)))
+}
+
+
+# nfl for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_nfl<-rbind(cp_nfl,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(test_data = dataset_test_list[[i]],
+                              cutoff = as.numeric((cutoff_10yr %>% 
+                                                     filter(marker=="nfl"&
+                                                              outcome=="AD"))$cp),
+                        marker = nfl, outcome = ad10, 
+                        direction = ">=")) %>% 
+                  as.data.frame() %>% 
+                  set_names(names(empty_frame)))
+}
+
+
+# 3.6. gfap ----
+cp_gfap<-empty_frame
+
+# gfap for dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_gfap<-rbind(cp_gfap,
+                cbind(data=names(dataset_test_list)[i],
+                      cp_out(test_data = dataset_test_list[[i]],
+                             cutoff = as.numeric((cutoff_10yr %>% 
+                                                    filter(marker=="gfap"&
+                                                             outcome=="Dementia"))$cp),
+                       marker = gfap, outcome = dem10, 
+                       direction = ">=")) %>% 
+                  as.data.frame() %>% 
+                  set_names(names(empty_frame)))
+}
+
+
+# gfap for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_gfap<-rbind(cp_gfap,
+                cbind(data=names(dataset_test_list)[i],
+                      cp_out(test_data = dataset_test_list[[i]],
+                             cutoff = as.numeric((cutoff_10yr %>% 
+                                                    filter(marker=="gfap"&
+                                                             outcome=="AD"))$cp),
+                       marker = gfap, outcome = ad10, 
+                       direction = ">=")) %>% 
+                  as.data.frame() %>% 
+                  set_names(names(empty_frame)))
+}
+
+
+
+# 4. Combine all tables together ----
+table_sum<-cp_abratio %>% 
+  mutate(marker="abetaratio") %>% 
+  
+  rbind(cp_ptau181 %>% 
+          mutate(marker="ptau181")) %>% 
+  
+  rbind(cp_ptau217 %>% 
+          mutate(marker="ptau217")) %>% 
+  
+  rbind(cp_ttau %>% 
+          mutate(marker="ttau")) %>% 
+  
+  rbind(cp_nfl %>% 
+          mutate(marker="nfl")) %>% 
+  
+  rbind(cp_gfap %>% 
+          mutate(marker="gfap"))
+
+
+table_sum<-table_sum %>% 
+  select(marker,everything()) %>% 
+  mutate(outcome=ifelse(grepl("dem",data),"Dementia","AD")) %>% 
+  select(marker,outcome,everything()) %>% 
+  select(-data)
+
+
+
+colnames(table_sum)<-c("Biomarker","Outcome",
+                       "PPV in the test set","NPV in the test set",
+                       "Accuracy in the test set","Sensitivity in the test set",
+                       "Specificity in the test set","AUC in the test set")
+
+
