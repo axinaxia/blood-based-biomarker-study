@@ -93,6 +93,8 @@ gen miss = _st==0
 ttest age, by(miss)
 tab sex miss,chi col
 tab educ3trnew miss,chi col
+
+*"Chron_num" is the number of chronic diseases
 oneway Chron_num  miss, t 
 ttest Chron_num, by(miss)
 
