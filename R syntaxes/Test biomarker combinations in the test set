@@ -584,7 +584,7 @@ table_sum<-cp_abratio %>%
   rbind(nfl_gfap %>% 
           mutate(marker="NfL combined with GFAP"))
 
-
+# Tidy up the final summary table and edit column names
 table_sum<-table_sum %>% 
   select(marker,everything()) %>% 
   mutate(outcome=ifelse(grepl("dem",data),"Dementia","AD")) %>% 
