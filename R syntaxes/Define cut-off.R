@@ -42,7 +42,7 @@ for (dataset_name in names(datasets_list)) {
 
 # 2. Identify the cut-off value for each biomarker that maximizes Youden's index ----
 # ******************************************************************************************
-# Maximize Youden
+# Maximize Youden's index
 # (1) "x=" specifies the biomarker variable
 # (2) "class=" specifies the true dementia status
 # (3) "method=" specifies how to optimize the metric, e.g., maximizing the metric values
