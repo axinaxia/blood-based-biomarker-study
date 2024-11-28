@@ -1,1 +1,768 @@
+#--------------------------------------------------------------------------------------------------------------------------#
+# Analyses for "Blood-based biomarkers of Alzheimer’s disease and incident dementia in the community: a 16-year-long study"
+# Objective: 1. To evaluate performance of combinations of biomarkers using cut-offs derived from the training set
+# 2. Generate an ROC plot for the biomarker combinations
+# R version 4.3.3
+#--------------------------------------------------------------------------------------------------------------------------#
 
+
+library(tidyverse)
+library(cutpointr)
+library(haven)
+library(rlang)
+library(ggplot2)
+library(ggpubr)
+library(patchwork)
+
+
+
+# 1. Create variables for biomarker combinations ----
+#--------------------------------------------------------------------------------------------------------------------------#
+# (1) Define abnormal level for each biomarker
+# (2) Generate the number of biomarkers with abnormal levels in ptau217, GFAP, and NfL
+# (2) Generate three combinations for ptau217, GFAP, and NfL:
+# ptau217+GFAP, ptau217+NfL, GFAP+NfL
+#--------------------------------------------------------------------------------------------------------------------------#
+
+# first generate these variables for all-cause dementia
+dataset_dem10<-dataset_dem10 %>% 
+  mutate(abetaratio_pos_dem=as.numeric(abetaratio<=
+                                      (cutoff_10yr %>% 
+                                         filter(marker=="abetaratio"&
+                                                  outcome=="Dementia"))$cp), # abnormal ab ratio
+         ptau181_pos_dem=as.numeric(ptau181>=
+                                   (cutoff_10yr %>% 
+                                      filter(marker=="ptau181"&
+                                               outcome=="Dementia"))$cp), # elevated ptau181
+         ttau_pos_dem=as.numeric(ttau>=
+                                      (cutoff_10yr %>% 
+                                         filter(marker=="ttau"&
+                                                  outcome=="Dementia"))$cp), # elevated ttau
+         ptau217_pos_dem=as.numeric(ptau217>=
+                                      (cutoff_10yr %>% 
+                                         filter(marker=="ptau217"&
+                                                  outcome=="Dementia"))$cp), # elevated ptau217
+         nfl_pos_dem=as.numeric(nfl>=
+                                      (cutoff_10yr %>% 
+                                         filter(marker=="nfl"&
+                                                  outcome=="Dementia"))$cp), # elevated nfl
+         gfap_pos_dem=as.numeric(gfap>=
+                                  (cutoff_10yr %>% 
+                                     filter(marker=="gfap"&
+                                              outcome=="Dementia"))$cp), # elevated gfap
+)
+
+dataset_dem10<-dataset_dem10 %>%
+  mutate(no_posbio_dem=ptau217_pos_dem+nfl_pos_dem+gfap_pos_dem, # number of abnormal biomarkers among ptau217, gfap, and nfl
+         posbio1_dem=case_when(no_posbio_dem==0~0,
+                               no_posbio_dem==1~1,
+                               T~NA), # 0 = all three biomarkers have normal levels, 1 = one biomarker has abnormal level
+         posbio2_dem=case_when(no_posbio_dem==0~0,
+                               no_posbio_dem==2~1,
+                               T~NA), # 0 = all three biomarkers have normal levels, 1 = two biomarkers have abnormal level
+         posbio3_dem=case_when(no_posbio_dem==0~0,
+                               no_posbio_dem==3~1,
+                               T~NA), # 0 = all three biomarkers have normal levels, 1 = three biomarkers have abnormal level
+         ptau217_nfl_dem=ifelse(ptau217_pos_dem==1&nfl_pos_dem==1,1,0), # elevated ptau217+nfl
+         ptau217_gfap_dem=ifelse(ptau217_pos_dem==1&gfap_pos_dem==1,1,0), # elevated ptau217+gfap
+         nfl_gfap_dem=ifelse(nfl_pos_dem==1&gfap_pos_dem==1,1,0) # elevated gfap+nfl
+)
+
+dataset_dem10<-dataset_dem10 %>% 
+  select(Lopnr,ends_with("pos_dem"),
+         posbio1_dem,posbio2_dem,posbio3_dem,
+         ptau217_nfl_dem,ptau217_gfap_dem,nfl_gfap_dem,dem10)
+  
+
+# do the same for AD
+dataset_ad10<-dataset_ad10 %>% 
+  mutate(abetaratio_pos_ad=as.numeric(abetaratio<=
+                                        (cutoff_10yr %>% 
+                                           filter(marker=="abetaratio"&
+                                                    outcome=="AD"))$cp),
+
+         ptau181_pos_ad=as.numeric(ptau181>=
+                                     (cutoff_10yr %>% 
+                                        filter(marker=="ptau181"&
+                                                 outcome=="AD"))$cp),
+
+         ttau_pos_ad=as.numeric(ttau>=
+                                  (cutoff_10yr %>% 
+                                     filter(marker=="ttau"&
+                                              outcome=="AD"))$cp),
+
+         ptau217_pos_ad=as.numeric(ptau217>=
+                                     (cutoff_10yr %>% 
+                                        filter(marker=="ptau217"&
+                                                 outcome=="AD"))$cp),
+
+         nfl_pos_ad=as.numeric(nfl>=
+                                 (cutoff_10yr %>% 
+                                    filter(marker=="nfl"&
+                                             outcome=="AD"))$cp),
+
+         gfap_pos_ad=as.numeric(gfap>=
+                                  (cutoff_10yr %>% 
+                                     filter(marker=="gfap"&
+                                              outcome=="AD"))$cp))
+
+dataset_ad10<-dataset_ad10 %>%
+  mutate(no_posbio_ad=ptau217_pos_ad+nfl_pos_ad+gfap_pos_ad,
+         posbio1_ad=case_when(no_posbio_ad==0~0,
+                              no_posbio_ad==1~1,
+                              T~NA),
+         posbio2_ad=case_when(no_posbio_ad==0~0,
+                              no_posbio_ad==2~1,
+                              T~NA),
+         posbio3_ad=case_when(no_posbio_ad==0~0,
+                              no_posbio_ad==3~1,
+                              T~NA),
+         
+         ptau217_nfl_ad=ifelse(ptau217_pos_ad==1&nfl_pos_ad==1,1,0),
+         ptau217_gfap_ad=ifelse(ptau217_pos_ad==1&gfap_pos_ad==1,1,0),
+         nfl_gfap_ad=ifelse(nfl_pos_ad==1&gfap_pos_ad==1,1,0))
+
+dataset_ad10<-dataset_ad10 %>% 
+  select(Lopnr,ends_with("pos_ad"),
+         posbio1_ad,posbio2_ad,posbio3_ad,
+         ptau217_nfl_ad,ptau217_gfap_ad,nfl_gfap_ad,ad10)
+
+
+# generate test sets
+datasets_list <- list(
+  "dataset_dem10" = dataset_dem10,
+  "dataset_ad10" = dataset_ad10
+)
+
+dataset_training_list <- list()
+dataset_test_list <- list()
+
+for (dataset_name in names(datasets_list)) {
+  data <- datasets_list[[dataset_name]]  
+  split_ratio<-0.8
+  
+  set.seed(202411)
+  training_set <- data %>% sample_frac(split_ratio) # Sample for training set
+  
+  test_set <- data %>% anti_join(training_set, by = "Lopnr")  # The remaining sample is the test set
+  
+  dataset_training_list[[paste0(dataset_name, "_training")]] <- training_set
+  dataset_test_list[[paste0(dataset_name, "_test")]] <- test_set
+}
+
+
+
+
+
+# 2. Evaluate the performance of individual dichtomized biomarkers and biomarker combinations ----
+cp_out <- function(data, marker, outcome) {
+  # "marker" and "outcome" in the function evaluated as column names
+  marker <- enquo(marker)
+  outcome <- enquo(outcome)
+
+  # Test the performance of each biomarker in the test set using the cut-off derived from the training set
+  # calculate PPV etc in the test set
+  # The function also returns common measures - accuracy, sensitivity, specificity, and AUC
+  set.seed(202411)
+  cp_test_temp_ppv <- cutpointr(
+    data = data, x = !!marker, class = !!outcome, 
+    pos_class = 1, direction = ">=", 
+    method = oc_manual, # manually set cut-off for the biomarker (binary variable with values 0 and 1)
+    cutpoint = 1, # >=1 indicate having biomarker levels that predict higher risk of the outcome
+    metric = ppv,
+    boot_runs = 5000,
+    na.rm=T
+  )
+  
+  # calculate NPV in the test set
+  set.seed(202411)
+  cp_test_temp_npv <- cutpointr(
+    data = data, x = !!marker, class = !!outcome, 
+    pos_class = 1, direction = ">=", 
+    method = oc_manual, # manually set cut-off for the biomarker (binary variable with values 0 and 1)
+    cutpoint = 1, # >=1 indicate having biomarker levels that predict higher risk of the outcome
+    metric = npv,
+    boot_runs = 5000,
+    na.rm=T
+  )
+  
+  # estimates and 95% CI in the test set
+  # PPV and 95% CI
+  test_ppv<-as.numeric(cp_test_temp_ppv$ppv)
+  test_ppv_ci<-boot_ci(cp_test_temp_ppv,ppv)
+  test_ppv_ci<-paste0(format(round(test_ppv*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_ppv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_ppv_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # NPV and 95% CI
+  test_npv<-as.numeric(cp_test_temp_npv$npv)
+  test_npv_ci<-boot_ci(cp_test_temp_npv,npv)
+  test_npv_ci<-paste0(format(round(test_npv*100,digits = 1),nsmall = 1)," (",
+                      format(round(test_npv_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                      format(round(test_npv_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Accuracy and 95% CI
+  test_acc<-as.numeric(cp_test_temp_ppv$acc)
+  test_acc_ci<-boot_ci(cp_test_temp_ppv,acc)
+  test_acc_ci<-paste0(format(round(test_acc*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_acc_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_acc_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Sensitivity and 95% CI
+  test_sens<-as.numeric(cp_test_temp_ppv$sensitivity)
+  test_sens_ci<-boot_ci(cp_test_temp_ppv,sensitivity)
+  test_sens_ci<-paste0(format(round(test_sens*100,digits = 1),nsmall = 1)," (",
+                        format(round(test_sens_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                        format(round(test_sens_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # Specificity and 95% CI
+  test_spe<-as.numeric(cp_test_temp_ppv$specificity)
+  test_spe_ci<-boot_ci(cp_test_temp_ppv,specificity)
+  test_spe_ci<-paste0(format(round(test_spe*100,digits = 1),nsmall = 1)," (",
+                       format(round(test_spe_ci[1,2]*100,digits = 1),nsmall = 1),"-",
+                       format(round(test_spe_ci[2,2]*100,digits = 1),nsmall = 1),")")
+  
+  # AUC and 95% CI
+  test_auc<-as.numeric(cp_test_temp_ppv$AUC)
+  test_auc_ci<-boot_ci(cp_test_temp_ppv,AUC)
+  test_auc_ci<-paste0(format(round(test_auc,digits = 3),nsmall=3)," (",
+                      format(round(as.numeric(test_auc_ci[1,2]),digits = 3),nsmall = 3),"-",
+                      format(round(as.numeric(test_auc_ci[2,2]),digits = 3),nsmall = 3),")")
+  
+  
+  return(data.frame(test_ppv_ci = test_ppv_ci, test_npv_ci = test_npv_ci,
+    test_acc_ci = test_acc_ci, test_sens_ci = test_sens_ci,
+    test_spe_ci = test_spe_ci,test_auc_ci = test_auc_ci,
+    sens = test_sens, spe = test_spe))
+}
+
+empty_frame <- data.frame(data = character(0),test_ppv_ci = character(0),
+                          test_npv_ci = character(0),test_acc_ci = character(0),
+                          test_sens_ci = character(0),test_spe_ci = character(0),
+                          test_auc_ci = character(0),sens = numeric(0),
+                          spe = numeric(0)) 
+
+
+# 2.1. abratio ----
+cp_abratio<-empty_frame
+
+# ab ratio for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_abratio<-rbind(cp_abratio,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = abetaratio_pos_dem, outcome = dem10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+
+# ab ratio for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_abratio<-rbind(cp_abratio,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = abetaratio_pos_ad, outcome = ad10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+# 2.2. ptau181 ----
+cp_ptau181<-empty_frame
+
+# ptau181 for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_ptau181<-rbind(cp_ptau181,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = ptau181_pos_dem, outcome = dem10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+
+# ptau181 for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ptau181<-rbind(cp_ptau181,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = ptau181_pos_ad, outcome = ad10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+
+# 2.3. ptau217 ----
+cp_ptau217<-empty_frame
+
+# ptau217 for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_ptau217<-rbind(cp_ptau217,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = ptau217_pos_dem, outcome = dem10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+
+# ptau217 for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ptau217<-rbind(cp_ptau217,
+                 cbind(data=names(dataset_test_list)[i],
+                       cp_out(data = dataset_test_list[[i]],
+                              marker = ptau217_pos_ad, outcome = ad10)) %>% 
+                   as.data.frame() %>% 
+                   set_names(names(empty_frame)))
+}
+
+
+
+
+# 2.4. ttau ----
+cp_ttau<-empty_frame
+
+# ttau for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_ttau<-rbind(cp_ttau,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = ttau_pos_dem, outcome = dem10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+
+# ttau for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_ttau<-rbind(cp_ttau,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = ttau_pos_ad, outcome = ad10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+
+# 2.5. nfl ----
+cp_nfl<-empty_frame
+
+# nfl for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_nfl<-rbind(cp_nfl,
+                      cbind(data=names(dataset_test_list)[i],
+                            cp_out(data = dataset_test_list[[i]],
+                                   marker = nfl_pos_dem, outcome = dem10)) %>% 
+                        as.data.frame() %>% 
+                        set_names(names(empty_frame)))
+}
+
+
+# nfl for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_nfl<-rbind(cp_nfl,
+                      cbind(data=names(dataset_test_list)[i],
+                            cp_out(data = dataset_test_list[[i]],
+                                   marker = nfl_pos_ad, outcome = ad10)) %>% 
+                        as.data.frame() %>% 
+                        set_names(names(empty_frame)))
+}
+
+
+# 2.6. gfap ----
+cp_gfap<-empty_frame
+
+# gfap for all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  cp_gfap<-rbind(cp_gfap,
+                  cbind(data=names(dataset_test_list)[i],
+                        cp_out(data = dataset_test_list[[i]],
+                               marker = gfap_pos_dem, outcome = dem10)) %>% 
+                    as.data.frame() %>% 
+                    set_names(names(empty_frame)))
+}
+
+
+# gfap for AD
+for (i in grep("ad10",names(dataset_test_list))){
+  cp_gfap<-rbind(cp_gfap,
+                  cbind(data=names(dataset_test_list)[i],
+                        cp_out(data = dataset_test_list[[i]],
+                               marker = gfap_pos_ad, outcome = ad10)) %>% 
+                    as.data.frame() %>% 
+                    set_names(names(empty_frame)))
+}
+
+
+# 2.7. one positive biomarker ----
+posbio1<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  posbio1<-rbind(posbio1,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(data = dataset_test_list[[i]],
+                           marker = posbio1_dem, outcome = dem10)) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  posbio1<-rbind(posbio1,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = posbio1_ad, outcome = ad10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+# 2.8. two positive biomarkers ----
+posbio2<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  posbio2<-rbind(posbio2,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = posbio2_dem, outcome = dem10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  posbio2<-rbind(posbio2,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(data = dataset_test_list[[i]],
+                                 marker = posbio2_ad, outcome = ad10)) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+# 2.9. three positive biomarkers ----
+posbio3<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  posbio3<-rbind(posbio3,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = posbio3_dem, outcome = dem10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  posbio3<-rbind(posbio3,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(data = dataset_test_list[[i]],
+                                 marker = posbio3_ad, outcome = ad10)) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+
+
+# 2.10. ptau217 combined with nfl ----
+ptau217_nfl<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  ptau217_nfl<-rbind(ptau217_nfl,
+                     cbind(data=names(dataset_test_list)[i],
+                           cp_out(data = dataset_test_list[[i]],
+                                  marker = ptau217_nfl_dem, outcome = dem10)) %>% 
+                       as.data.frame() %>% 
+                       set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  ptau217_nfl<-rbind(ptau217_nfl,
+                    cbind(data=names(dataset_test_list)[i],
+                          cp_out(data = dataset_test_list[[i]],
+                                 marker = ptau217_nfl_ad, outcome = ad10)) %>% 
+                      as.data.frame() %>% 
+                      set_names(names(empty_frame)))
+}
+
+
+# 2.11. ptau217 combined with gfap ----
+ptau217_gfap<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  ptau217_gfap<-rbind(ptau217_gfap,
+                         cbind(data=names(dataset_test_list)[i],
+                               cp_out(data = dataset_test_list[[i]],
+                                      marker = ptau217_gfap_dem, outcome = dem10)) %>% 
+                           as.data.frame() %>% 
+                           set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  ptau217_gfap<-rbind(ptau217_gfap,
+                        cbind(data=names(dataset_test_list)[i],
+                              cp_out(data = dataset_test_list[[i]],
+                                     marker = ptau217_gfap_ad, outcome = ad10)) %>% 
+                          as.data.frame() %>% 
+                          set_names(names(empty_frame)))
+}
+
+
+# 2.12. nfl combined with gfap ----
+nfl_gfap<-empty_frame
+
+# all-cause dementia
+for (i in grep("dem10",names(dataset_test_list))){
+  nfl_gfap<-rbind(nfl_gfap,
+                          cbind(data=names(dataset_test_list)[i],
+                                cp_out(data = dataset_test_list[[i]],
+                                       marker = nfl_gfap_dem, outcome = dem10)) %>% 
+                            as.data.frame() %>% 
+                            set_names(names(empty_frame)))
+}
+
+
+# AD
+for (i in grep("ad10",names(dataset_test_list))){
+  nfl_gfap<-rbind(nfl_gfap,
+                         cbind(data=names(dataset_test_list)[i],
+                               cp_out(data = dataset_test_list[[i]],
+                                      marker = nfl_gfap_ad, outcome = ad10)) %>% 
+                           as.data.frame() %>% 
+                           set_names(names(empty_frame)))
+}
+
+
+
+
+# 3. Combine all tables together ----
+table_sum<-cp_abratio %>% 
+  mutate(marker="abetaratio") %>% 
+  
+  rbind(cp_ptau181 %>% 
+          mutate(marker="ptau181")) %>% 
+  
+  rbind(cp_ptau217 %>% 
+          mutate(marker="ptau217")) %>% 
+  
+  rbind(cp_ttau %>% 
+          mutate(marker="ttau")) %>% 
+  
+  rbind(cp_nfl %>% 
+          mutate(marker="nfl")) %>% 
+  
+  rbind(cp_gfap %>% 
+          mutate(marker="gfap")) %>% 
+  
+  rbind(posbio1 %>% 
+          mutate(marker="One elevated biomarker")) %>% 
+  
+  rbind(posbio2 %>% 
+          mutate(marker="Two elevated biomarkers")) %>% 
+  
+  rbind(posbio3 %>% 
+          mutate(marker="Three elevated biomarkers")) %>% 
+  
+  rbind(ptau217_nfl %>% 
+          mutate(marker="ptau217 combined with NfL")) %>% 
+  
+  rbind(ptau217_gfap %>% 
+          mutate(marker="ptau217 combined with GFAP")) %>% 
+  
+  rbind(nfl_gfap %>% 
+          mutate(marker="NfL combined with GFAP"))
+
+
+table_sum<-table_sum %>% 
+  select(marker,everything()) %>% 
+  mutate(outcome=ifelse(grepl("dem",data),"Dementia","AD")) %>% 
+  select(marker,outcome,everything()) %>% 
+  select(-data)
+
+table_sum_tidy<-table_sum %>% 
+  select(-c(sens,spe))
+
+colnames(table_sum_tidy)<-c("Biomarker","Outcome","PPV","NPV",
+                       "Accuracy","Sensitivity","Specificity","AUC")
+
+  
+
+# 4. ROC plots ----
+# 4.1. ROC plots for individual markers ----
+roc_data_single<-table_sum %>% 
+  filter(marker %in% c("abetaratio","ptau181",
+                       "ptau217","ttau","nfl","gfap")) %>% 
+  select(marker,outcome,sens,spe) 
+
+roc_data_single<-roc_data_single %>% 
+  rbind(roc_data_single %>% 
+          mutate(sens=0,
+                 spe=1)) %>% # generate the lower endpoint of the diagonal line on the ROC curve
+  rbind(roc_data_single %>% 
+          mutate(sens=1,
+                 spe=0)) %>% # generate the upper endpoint of the diagonal line on the ROC curve 
+  mutate(marker=factor(marker,levels=c("abetaratio","ptau181",
+                                       "ptau217","ttau","nfl","gfap"),
+                       labels=c("Aβ42/Aβ40 ratio","P-tau181",
+                                "P-tau217","T-tau","NfL","GFAP")))
+
+dem10_auc_single<-ggplot(data = roc_data_single %>% 
+                    filter(outcome=="Dementia"),
+                  aes(x = 1 - spe, y = sens, color = marker)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black")  +
+  geom_line(size=0.6) +
+  geom_point(aes(x = 1 - spe, y = sens, color = marker), size = 2) +
+  scale_colour_manual(values = c("#E69F00", "#56B4E9","#009E73",
+                                 "#ee6677","darkblue","#aa3377"))+
+  scale_x_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  xlab("1 - Specificity")+
+  ylab("Sensitivity")+
+  labs(color="Single biomarker")+
+  theme_classic()+
+  theme(plot.margin = margin(b=0.5,t=1,l=0.5, r=0.5,unit = "cm"),
+        text = element_text(size=12,colour = "black"),
+        axis.title = element_text(size=12,colour = "black",face="bold",
+                                  vjust = +3),
+        axis.text.x= element_text(size=12,colour = "black"),
+        axis.text.y= element_text(size=12,colour = "black"),
+        legend.text = element_text(size=12,colour = "black"),
+        legend.title = element_text(size=12,colour = "black",face="bold"))
+
+
+ad10_auc_single<-ggplot(data = roc_data_single %>% 
+                   filter(outcome=="AD"),
+                 aes(x = 1 - spe, y = sens, color = marker)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black")  +
+  geom_line(size=0.6) +
+  geom_point(aes(x = 1 - spe, y = sens, color = marker), size = 2) +
+  scale_colour_manual(values = c("#E69F00", "#56B4E9","#009E73",
+                                 "#ee6677","darkblue","#aa3377"))+
+  scale_x_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  xlab("1 - Specificity")+
+  ylab("Sensitivity")+
+  labs(color="Single biomarker")+
+  theme_classic()+
+  theme(plot.margin = margin(b=0.5,t=1,l=0.5, r=0.1,unit = "cm"),
+        text = element_text(size=12,colour = "black"),
+        axis.title = element_text(size=12,colour = "black",face="bold",
+                                  vjust = +3),
+        axis.text.x= element_text(size=12,colour = "black"),
+        axis.text.y= element_text(size=12,colour = "black"),
+        legend.text = element_text(size=12,colour = "black"),
+        legend.title = element_text(size=12,colour = "black",face="bold"))
+
+auc_single_legend<-get_legend(dem10_auc_single)
+
+
+
+
+
+# 4.2. ROC plots for biomarker combinations ----
+roc_data_comb<-table_sum %>% 
+  filter(marker %in% c("One elevated biomarker","Two elevated biomarkers",
+                       "Three elevated biomarkers","ptau217 combined with GFAP",
+                       "ptau217 combined with NfL","NfL combined with GFAP")) %>% 
+  select(marker,outcome,sens,spe) 
+  
+roc_data_comb<-roc_data_comb %>% 
+  rbind(roc_data_comb %>% 
+          mutate(sens=0,
+                 spe=1)) %>% # generate the lower endpoint of the diagonal line on the ROC curve 
+  rbind(roc_data_comb %>% 
+          mutate(sens=1,
+                 spe=0)) %>% # generate the upper endpoint of the diagonal line on the ROC curve 
+  mutate(marker=factor(marker,levels=c("One elevated biomarker","Two elevated biomarkers",
+                                       "Three elevated biomarkers","ptau217 combined with GFAP",
+                                       "ptau217 combined with NfL","NfL combined with GFAP"),
+                       labels=c("One elevated biomarker","Two elevated biomarkers",
+                                "Three elevated biomarkers","P-tau217 combined with GFAP",
+                                "P-tau217 combined with NfL","NfL combined with GFAP")))
+
+dem10_auc_comb<-ggplot(data = roc_data_comb %>% 
+                         filter(outcome=="Dementia"),
+                       aes(x = 1 - spe, y = sens, color = marker)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black")  +
+  geom_line(size=0.6) +
+  geom_point(aes(x = 1 - spe, y = sens, color = marker), size = 2) +
+  scale_colour_manual(values = c("#E69F00", "#56B4E9","#009E73",
+                                 "#ee6677","darkblue","#aa3377"))+
+  scale_x_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  xlab("1 - Specificity")+
+  ylab("Sensitivity")+
+  labs(color="Biomarker combinations")+
+  theme_classic()+
+  theme(plot.margin = margin(b=0.5,t=1,l=0.5, r=0.5,unit = "cm"),
+        text = element_text(size=12,colour = "black"),
+        axis.title = element_text(size=12,colour = "black",face="bold",
+                                  vjust = +3),
+        axis.text.x= element_text(size=12,colour = "black"),
+        axis.text.y= element_text(size=12,colour = "black"),
+        legend.text = element_text(size=12,colour = "black"),
+        legend.title = element_text(size=12,colour = "black",face="bold"))
+
+
+ad10_auc_comb<-ggplot(data = roc_data_comb %>% 
+                    filter(outcome=="AD"),
+                  aes(x = 1 - spe, y = sens, color = marker)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black")  +
+  geom_line(size=0.6) +
+  geom_point(aes(x = 1 - spe, y = sens, color = marker), size = 2) +
+  scale_colour_manual(values = c("#E69F00", "#56B4E9","#009E73",
+                                 "#ee6677","darkblue","#aa3377"))+
+  scale_x_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  scale_y_continuous(limits = c(0,1),breaks = seq(0,1,0.2),expand = c(0,0))+
+  xlab("1 - Specificity")+
+  ylab("Sensitivity")+
+  labs(color="Biomarker combinations")+
+  theme_classic()+
+  theme(plot.margin = margin(b=0.5,t=1,l=0.5, r=0.1,unit = "cm"),
+        text = element_text(size=12,colour = "black"),
+        axis.title = element_text(size=12,colour = "black",face="bold",
+                                  vjust = +3),
+        axis.text.x= element_text(size=12,colour = "black"),
+        axis.text.y= element_text(size=12,colour = "black"),
+        legend.text = element_text(size=12,colour = "black"),
+        legend.title = element_text(size=12,colour = "black",face="bold"))
+
+auc_comb_legend<-get_legend(dem10_auc_comb)
+
+# 4.3. Combine plots ----
+auc_single<-ggarrange(dem10_auc_single+
+                        theme(legend.position = "none"),
+                      ad10_auc_single+
+                        theme(legend.position = "none"),ncol=2,
+                      labels = c("Dementia","AD"),
+                      legend = NULL)
+
+auc_comb<-ggarrange(dem10_auc_comb+
+                      theme(legend.position = "none"),
+                    ad10_auc_comb+
+                      theme(legend.position = "none"),ncol=2,
+                      labels = c("Dementia","AD"),
+                      legend = NULL)
+
+layout <- c(
+  area(t = 2, l = 0, b = 7, r = 8),
+  area(t = 2, l = 9, b = 7, r = 11),
+  area(t = 2, l = 12, b = 7, r = 13),
+  area(t = 1, l = 9, b = 2, r = 11)
+)
+
+auc_single+auc_single_legend+
+  auc_comb+auc_comb_legend+
+  plot_layout(widths = c(2,1))
