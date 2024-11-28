@@ -1,6 +1,6 @@
 #--------------------------------------------------------------------------------------------------------------------------#
 # Analyses for "Blood-based biomarkers of Alzheimer’s disease and incident dementia in the community: a 16-year-long study"
-# Objective: To evaluate biomarker performance in people with cognitive complaint in the test set
+# Objective: test biomarker performance in people with cognitive complaint in the test set
 # Using the optimal cut-offs derived from the training set
 # R version 4.3.3
 #--------------------------------------------------------------------------------------------------------------------------#
@@ -126,7 +126,7 @@ empty_frame <- data.frame(data = character(0),
                           test_acc_ci = character(0),test_sens_ci = character(0), 
                           test_spe_ci = character(0),test_auc_ci = character(0)) 
 
-# 3.1. ab ratio ----
+# 2.1. ab ratio ----
 cp_abratio<-empty_frame
 
 # ab ratio for dementia
@@ -134,7 +134,7 @@ for (i in grep("dem10",names(dataset_test_list))){
   cp_abratio<-rbind(cp_abratio,
                     cbind(data=names(dataset_test_list)[i],
                           cp_out(test_data = dataset_test_list[[i]],
-                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                 cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                                         filter(marker=="abetaratio"&
                                                                  outcome=="Dementia"))$cp),
                            marker = abetaratio, outcome = dem10, 
@@ -149,7 +149,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_abratio<-rbind(cp_abratio,
                     cbind(data=names(dataset_test_list)[i],
                           cp_out(test_data = dataset_test_list[[i]],
-                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                 cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                                         filter(marker=="abetaratio"&
                                                                  outcome=="AD"))$cp),
                            marker = abetaratio, outcome = ad10, 
@@ -159,7 +159,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 }
 
 
-# 3.2. ptau181 ----
+# 2.2. ptau181 ----
 cp_ptau181<-empty_frame
 
 # ptau181 for dementia
@@ -167,7 +167,7 @@ for (i in grep("dem10",names(dataset_test_list))){
 cp_ptau181<-rbind(cp_ptau181,
                  cbind(data=names(dataset_test_list)[i],
                        cp_out(test_data = dataset_test_list[[i]],
-                              cutoff = as.numeric((cutoff_10yr %>% 
+                              cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                      filter(marker=="ptau181"&
                                                               outcome=="Dementia"))$cp),
                         marker = ptau181, outcome = dem10, 
@@ -181,7 +181,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_ptau181<-rbind(cp_ptau181,
                  cbind(data=names(dataset_test_list)[i],
                   cp_out(test_data = dataset_test_list[[i]],
-                         cutoff = as.numeric((cutoff_10yr %>% 
+                         cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                 filter(marker=="ptau181"&
                                                          outcome=="AD"))$cp),
                         marker = ptau181, outcome = ad10, 
@@ -191,7 +191,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 }
 
 
-# 3.3. ptau217 ----
+# 2.3. ptau217 ----
 cp_ptau217<-empty_frame
 
 # ptau217 for dementia
@@ -199,7 +199,7 @@ for (i in grep("dem10",names(dataset_test_list))){
   cp_ptau217<-rbind(cp_ptau217,
                     cbind(data=names(dataset_test_list)[i],
                      cp_out(test_data = dataset_test_list[[i]],
-                            cutoff = as.numeric((cutoff_10yr %>% 
+                            cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                    filter(marker=="ptau217"&
                                                             outcome=="Dementia"))$cp),
                            marker = ptau217, outcome = dem10, 
@@ -215,7 +215,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_ptau217<-rbind(cp_ptau217,
                     cbind(data=names(dataset_test_list)[i],
                           cp_out(test_data = dataset_test_list[[i]],
-                                 cutoff = as.numeric((cutoff_10yr %>% 
+                                 cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                         filter(marker=="ptau217"&
                                                                  outcome=="AD"))$cp),
                            marker = ptau217, outcome = ad10, 
@@ -226,7 +226,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 
 
 
-# 3.4. ttau ----
+# 2.4. ttau ----
 cp_ttau<-empty_frame
 
 # ttau for dementia
@@ -234,7 +234,7 @@ for (i in grep("dem10",names(dataset_test_list))){
   cp_ttau<-rbind(cp_ttau,
                  cbind(data=names(dataset_test_list)[i],
                   cp_out(test_data = dataset_test_list[[i]],
-                         cutoff = as.numeric((cutoff_10yr %>% 
+                         cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                 filter(marker=="ttau"&
                                                          outcome=="Dementia"))$cp),
                         marker = ttau, outcome = dem10, 
@@ -248,7 +248,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_ttau<-rbind(cp_ttau,
                  cbind(data=names(dataset_test_list)[i],
                   cp_out(test_data = dataset_test_list[[i]],
-                         cutoff = as.numeric((cutoff_10yr %>% 
+                         cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                 filter(marker=="ttau"&
                                                          outcome=="AD"))$cp),
                         marker = ttau, outcome = ad10, 
@@ -259,7 +259,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 
 
 
-# 3.5. nfl ----
+# 2.5. nfl ----
 cp_nfl<-empty_frame
 
 # nfl for dementia
@@ -267,7 +267,7 @@ for (i in grep("dem10",names(dataset_test_list))){
   cp_nfl<-rbind(cp_nfl,
                 cbind(data=names(dataset_test_list)[i],
                       cp_out(test_data = dataset_test_list[[i]],
-                             cutoff = as.numeric((cutoff_10yr %>% 
+                             cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                                     filter(marker=="nfl"&
                                                              outcome=="Dementia"))$cp),
                        marker = nfl, outcome = dem10, 
@@ -282,7 +282,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_nfl<-rbind(cp_nfl,
                  cbind(data=names(dataset_test_list)[i],
                        cp_out(test_data = dataset_test_list[[i]],
-                              cutoff = as.numeric((cutoff_10yr %>% 
+                              cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                      filter(marker=="nfl"&
                                                               outcome=="AD"))$cp),
                         marker = nfl, outcome = ad10, 
@@ -292,7 +292,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 }
 
 
-# 3.6. gfap ----
+# 2.6. gfap ----
 cp_gfap<-empty_frame
 
 # gfap for dementia
@@ -300,7 +300,7 @@ for (i in grep("dem10",names(dataset_test_list))){
   cp_gfap<-rbind(cp_gfap,
                 cbind(data=names(dataset_test_list)[i],
                       cp_out(test_data = dataset_test_list[[i]],
-                             cutoff = as.numeric((cutoff_10yr %>% 
+                             cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD
                                                     filter(marker=="gfap"&
                                                              outcome=="Dementia"))$cp),
                        marker = gfap, outcome = dem10, 
@@ -315,7 +315,7 @@ for (i in grep("ad10",names(dataset_test_list))){
   cp_gfap<-rbind(cp_gfap,
                 cbind(data=names(dataset_test_list)[i],
                       cp_out(test_data = dataset_test_list[[i]],
-                             cutoff = as.numeric((cutoff_10yr %>% 
+                             cutoff = as.numeric((cutoff_10yr %>% # "cutoff_10yr" contains the optimal cutoff for each biomarker for all-cause dementia and AD 
                                                     filter(marker=="gfap"&
                                                              outcome=="AD"))$cp),
                        marker = gfap, outcome = ad10, 
@@ -326,7 +326,7 @@ for (i in grep("ad10",names(dataset_test_list))){
 
 
 
-# 4. Combine all tables together ----
+# 3. Combine all tables together ----
 table_sum<-cp_abratio %>% 
   mutate(marker="abetaratio") %>% 
   
@@ -358,5 +358,3 @@ colnames(table_sum)<-c("Biomarker","Outcome",
                        "PPV in the test set","NPV in the test set",
                        "Accuracy in the test set","Sensitivity in the test set",
                        "Specificity in the test set","AUC in the test set")
-
-
