@@ -440,8 +440,6 @@ table_sum<-table_sum %>%
   select(-data)
 
 
-saveRDS(table_sum %>% select(marker,outcome,cp),"cutoff_10yr.rds")
-
 # Tidy up the final summary table and edit column names
 table_sum_tidy<-table_sum %>%
   select(-cp)
